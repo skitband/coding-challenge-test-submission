@@ -36,7 +36,8 @@ const Form: FunctionComponent<FormProps> = ({
               key={`${name}-${index}`}
               name={name}
               placeholder={placeholder}
-              {...extraProps}
+              value={extraProps?.value ?? ""}
+              onChange={extraProps?.onChange}
             />
           </div>
         ))}

@@ -1,3 +1,9 @@
+.spinner {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+}
 .button {
   border-radius: var(--border-radius-default);
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
@@ -23,3 +29,15 @@
 /** TODO: Create separate styles for .primary and .secondary variants of this button:
 * - Must use the CSS variables declared in App.css
 */
+
+.primary {
+  background: var(--color-brand);
+  color: #fff;
+  border: none;
+}
+
+.secondary {
+  background: #fff;
+  color: var(--color-brand);
+  border: 2px solid var(--color-brand);
+}

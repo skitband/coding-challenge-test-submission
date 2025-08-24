@@ -8,6 +8,7 @@ interface ButtonProps {
   type?: ButtonType;
   variant?: ButtonVariant;
   loading?: boolean;
+  className?: string;
   children: React.ReactNode;
 }
 
@@ -17,17 +18,25 @@ const Button: FunctionComponent<ButtonProps> = ({
   type = "button",
   variant = "primary",
   loading = false,
+  className,
 }) => {
+  const classNames = [$.button, variant === "primary" ? $.primary : $.secondary, className].filter(Boolean).join(" ");
   return (
     <button
-      // TODO: Add conditional classNames
-      // - Must have a condition to set the '.primary' className
-      // - Must have a condition to set the '.secondary' className
-      // - Display loading spinner per demo video. NOTE: add data-testid="loading-spinner" for spinner element (used for grading)
-      className={$.button}
+      className={classNames}
       type={type}
       onClick={onClick}
+      disabled={loading}
     >
+      {loading ? (
+        <span data-testid="loading-spinner" className={$.spinner} style={{ marginRight: 8 }}>
+          <svg width="16" height="16" viewBox="0 0 50 50">
+            <circle cx="25" cy="25" r="20" fill="none" stroke="#ffffff" strokeWidth="5" strokeDasharray="31.4 31.4">
+              <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s" />
+            </circle>
+          </svg>
+        </span>
+      ) : null}
       {children}
     </button>
   );

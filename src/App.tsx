@@ -1,5 +1,4 @@
 import React from "react";
-
 import Address from "@/components/Address/Address";
 import AddressBook from "@/components/AddressBook/AddressBook";
 import Button from "@/components/Button/Button";
@@ -10,6 +9,7 @@ import useAddressBook from "@/hooks/useAddressBook";
 
 import styles from "./App.module.css";
 import { Address as AddressType } from "./types";
+import transformAddress, { RawAddressModel } from "./core/models/address";
 
 function App() {
   /**
@@ -30,6 +30,7 @@ function App() {
    */
   const [error, setError] = React.useState<undefined | string>(undefined);
   const [addresses, setAddresses] = React.useState<AddressType[]>([]);
+  const [loading, setLoading] = React.useState(false);
   /**
    * Redux actions
    */
@@ -63,32 +64,55 @@ function App() {
    * - Ensure to clear previous search results on each click
    * - Bonus: Add a loading state in the UI while fetching addresses
    */
-  const handleAddressSubmit = async (e: React.ChangeEvent<HTMLFormElement>) => {
+  const handleAddressSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError(undefined);
+    // Validation for postcode and house number
+    if (!postCode.trim() || !houseNumber.trim()) {
+      setError("Post code and house number are required!");
+      return;
+    }
+    setAddresses([]);
+    setLoading(true);
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_URL || "";
+      const url = `${baseUrl}/api/getAddresses?postcode=${encodeURIComponent(postCode)}&streetnumber=${encodeURIComponent(houseNumber)}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch addresses");
+      const data = await res.json();
+      const details: RawAddressModel[] = Array.isArray(data.details) ? data.details : [];
+      const transformed = details.map(addr => transformAddress({ ...addr, houseNumber }));
+      setAddresses(transformed);
+    } catch (err: any) {
+      setError("Could not fetch addresses. Please check your input and try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   /** TODO: Add basic validation to ensure first name and last name fields aren't empty
    * Use the following error message setError("First name and last name fields mandatory!")
    */
-  const handlePersonSubmit = (e: React.ChangeEvent<HTMLFormElement>) => {
+  const handlePersonSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
+    // Validation for first and last name
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First name and last name fields mandatory!");
+      return;
+    }
     if (!selectedAddress || !addresses.length) {
       setError(
         "No address selected, try to select an address or find one if you haven't"
       );
       return;
     }
-
     const foundAddress = addresses.find(
       (address) => address.id === selectedAddress
     );
-
     if (!foundAddress) {
       setError("Selected address not found");
       return;
     }
-
     addAddress({ ...foundAddress, firstName, lastName });
   };
 
@@ -103,7 +127,7 @@ function App() {
           </small>
         </h1>
         {/* TODO: Create generic <Form /> component to display form rows, legend and a submit button  */}
-        <form onSubmit={handleAddressSubmit}>
+  <form onSubmit={handleAddressSubmit}>
           <fieldset>
             <legend>🏠 Find an address</legend>
             <div className={styles.formRow}>
@@ -122,7 +146,7 @@ function App() {
                 placeholder="House number"
               />
             </div>
-            <Button type="submit">Find</Button>
+            <Button type="submit" loading={loading}>Find</Button>
           </fieldset>
         </form>
         {addresses.length > 0 &&
@@ -167,12 +191,21 @@ function App() {
         {/* TODO: Create an <ErrorMessage /> component for displaying an error message */}
         {error && <div className="error">{error}</div>}
 
-        {/* TODO: Add a button to clear all form fields. 
-        Button must look different from the default primary button, see design. 
-        Button text name must be "Clear all fields"
-        On Click, it must clear all form fields, remove all search results and clear all prior
-        error messages
-        */}
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => {
+            setPostCode("");
+            setHouseNumber("");
+            setFirstName("");
+            setLastName("");
+            setSelectedAddress("");
+            setAddresses([]);
+            setError(undefined);
+          }}
+        >
+          Clear all fields
+        </Button>
       </Section>
 
       <Section variant="dark">
